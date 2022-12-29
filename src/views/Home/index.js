@@ -17,6 +17,7 @@ import {APPROVAL} from '../../constants/api';
 import ApprovalItem from './components/ApprovalItem';
 import {SwipeListView} from 'react-native-swipe-list-view';
 import Icon from 'react-native-vector-icons/Ionicons';
+import IconAntDesign from 'react-native-vector-icons/AntDesign';
 import axios from 'axios';
 
 const Home = ({navigation}) => {
@@ -26,7 +27,6 @@ const Home = ({navigation}) => {
 
   useEffect(() => {
     axios.get(`${APPROVAL}/`).then(res => setData(res.data));
-    console.log('isfetching');
   }, [isDelete]);
 
   const handleDelete = async id => {
@@ -52,6 +52,14 @@ const Home = ({navigation}) => {
           renderHiddenItem={(data, rowMap) => (
             <View style={styles.rowBack}>
               <TouchableOpacity
+                style={[styles.btn, styles.btnUpdate]}
+                onPress={() => {
+                  rowMap[data.item.id].closeRow();
+                }}>
+                <IconAntDesign name="edit" size={30} color={COLORS.white} />
+              </TouchableOpacity>
+              <View style={styles.sharp}></View>
+              <TouchableOpacity
                 style={[styles.btn, styles.btnClose]}
                 onPress={() => {
                   rowMap[data.item.id].closeRow();
@@ -67,8 +75,8 @@ const Home = ({navigation}) => {
               </TouchableOpacity>
             </View>
           )}
-          leftOpenValue={120}
-          rightOpenValue={-120}
+          leftOpenValue={75}
+          rightOpenValue={-150}
         />
       </View>
     </View>
@@ -116,19 +124,28 @@ const styles = StyleSheet.create({
   btn: {
     paddingVertical: 23,
     paddingHorizontal: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   rowBack: {
     backgroundColor: COLORS.grey,
     flexDirection: 'row',
     borderRadius: 20,
-    paddingLeft: 20,
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     overflow: 'hidden',
+    width: '100%',
   },
   btnClose: {
     backgroundColor: COLORS.secondary,
+    width: '23%',
   },
   btnDelete: {
     backgroundColor: COLORS.red,
+    width: '23%',
+  },
+  btnUpdate: {
+    backgroundColor: COLORS.primary,
+    width: '55%',
+    alignItems: 'flex-start',
   },
 });

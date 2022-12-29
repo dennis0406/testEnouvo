@@ -18,7 +18,6 @@ const ApproverList = ({refRBS, setApprover, approver}) => {
   const [search, setSearch] = useState('');
 
   const {data} = useGetApprover();
-  console.log(approver);
 
   return (
     <View style={styles.container}>

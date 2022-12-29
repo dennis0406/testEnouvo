@@ -15,6 +15,8 @@ import {FEATURE} from '../constants/api';
 import {useGetApprover, useGetFeature} from '../helper/api';
 import FeatureList from './FeatureList';
 import ApproverList from './ApproverList';
+import ErrorMessage from './ErrorMessage';
+import ApproverInput from './ApproverInput';
 
 const Form = () => {
   const [quantity, setQuantity] = useState(0);
@@ -24,6 +26,26 @@ const Form = () => {
   const [featureName, setFeatureName] = useState('');
   const [approver, setApprover] = useState([]);
   const [approvalName, setApprovalName] = useState();
+  const [params, setParams] = useState({
+    name: '',
+    feature: '',
+    range: {},
+    approvers: [],
+  });
+
+  const handeChange = (name, value) => {
+    setParams({...params, [name]: value});
+  };
+
+  console.log(approver);
+  const [range, setRange] = useState({
+    minimum: 0,
+    maximum: 0,
+  });
+
+  const handeChangeRange = (name, value) => {
+    setRange({...range, [name]: value});
+  };
 
   const dataFeature = useGetFeature();
   const dataApprover = useGetApprover();
@@ -31,7 +53,7 @@ const Form = () => {
     if (feature !== '') {
       axios
         .get(`${FEATURE}/${feature}`)
-        .then(res => setFeatureName(res.data.name));
+        .then(res => handeChange('feature', res.data.name));
     }
   }, [feature]);
 
@@ -43,11 +65,12 @@ const Form = () => {
           <TextInput
             style={styles.input}
             placeholder="Input Matrix name"
-            onChange={text => console.log(text.nativeEvent.text)}
+            onChangeText={text => handeChange('name', text)}
             placeholderTextColor={COLORS.grey}
+            value={params.name}
           />
         </View>
-        <Text style={styles.errorMessage}>Error Message</Text>
+        <ErrorMessage message="test" />
       </View>
 
       <View style={styles.inputContainer}>
@@ -56,7 +79,7 @@ const Form = () => {
           <TextInput
             style={styles.input}
             placeholder="Select Feature"
-            value={featureName}
+            value={params.feature}
             placeholderTextColor={COLORS.grey}
             editable={false}
           />
@@ -67,7 +90,7 @@ const Form = () => {
             <Icon name="chevron-down" style={styles.iconInput} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.errorMessage}>Error Message</Text>
+        <ErrorMessage />
       </View>
 
       {/* feature lists */}
@@ -101,11 +124,13 @@ const Form = () => {
           <TextInput
             style={styles.input}
             placeholder="Input minimum"
-            onChange={text => console.log(text.nativeEvent.text)}
+            value={range.minimum}
+            onChangeText={text => handeChangeRange('minimum', text)}
             placeholderTextColor={COLORS.grey}
+            keyboardType="numeric"
           />
         </View>
-        <Text style={styles.errorMessage}>Error Message</Text>
+        <ErrorMessage />
       </View>
 
       <View style={styles.inputContainer}>
@@ -115,11 +140,13 @@ const Form = () => {
           <TextInput
             style={styles.input}
             placeholder="Input maximum"
-            onChange={text => console.log(text.nativeEvent.text)}
+            value={range.maximum}
+            onChangeText={text => handeChangeRange('maximum', text)}
             placeholderTextColor={COLORS.grey}
+            keyboardType="numeric"
           />
         </View>
-        <Text style={styles.errorMessage}>Error Message</Text>
+        <ErrorMessage />
       </View>
 
       <View style={styles.inputContainer}>
@@ -128,22 +155,26 @@ const Form = () => {
           <TextInput
             style={styles.input}
             placeholder="Input number"
-            onChange={text => {
-              setQuantity(parseInt(text.nativeEvent.text));
+            onChangeText={text => {
+              setQuantity(parseInt(text));
             }}
             placeholderTextColor={COLORS.grey}
             keyboardType="numeric"
             value={quantity}
           />
         </View>
-        <Text style={styles.errorMessage}>Error Message</Text>
+        <ErrorMessage />
       </View>
 
       {/* Approvers */}
       <View style={styles.approver}>
         {quantity > 0
           ? [...Array(quantity)].map((qty, index) => (
-              <View style={styles.inputContainer} key={index}>
+              <ApproverInput index={index} />
+            ))
+          : null}
+      </View>
+      {/* <View style={styles.inputContainer} key={index}>
                 <Text style={styles.label}>
                   Approver (Sequence {index + 1})
                 </Text>
@@ -162,13 +193,10 @@ const Form = () => {
                     <Icon name="chevron-down" style={styles.iconInput} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.errorMessage}>Error Message</Text>
-              </View>
-            ))
-          : null}
-      </View>
+                <ErrorMessage />
+              </View> */}
 
-      <View>
+      {/* <View>
         <RBSheet
           ref={refRBSheetApprover}
           closeOnPressMask={false}
@@ -189,7 +217,7 @@ const Form = () => {
             approver={approver}
           />
         </RBSheet>
-      </View>
+      </View> */}
 
       <TouchableOpacity onPress={() => {}} style={styles.btn}>
         <Button textBtn="ADD TO LIST" />
@@ -207,11 +235,12 @@ export default Form;
 const styles = StyleSheet.create({
   inputContainer: {
     width: '100%',
-    marginBottom: 50,
+    marginBottom: 20,
   },
   label: {
     color: COLORS.black,
     marginBottom: 8,
+    fontSize: 18,
   },
   wrapperInput: {
     flexDirection: 'row',

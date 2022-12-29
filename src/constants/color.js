@@ -7,4 +7,5 @@ export const COLORS = {
   grey: '#D1D2D4',
   red: '#D30707',
   bgCloseBtn: '#444444',
+  placeHolderColor: '#D1D2D4',
 };
