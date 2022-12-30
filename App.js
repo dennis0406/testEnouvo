@@ -58,7 +58,19 @@ const App = () => {
         <Stack.Screen
           name="Update"
           component={Update}
-          options={{headerShown: false}}
+          options={{
+            headerShown: true,
+            title: 'Approval Matrix',
+            headerStyle: {
+              backgroundColor: COLORS.primary,
+            },
+            headerTitleStyle: {
+              color: COLORS.white,
+            },
+            headerBackTitleStyle: {
+              backgroundColor: COLORS.white,
+            },
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

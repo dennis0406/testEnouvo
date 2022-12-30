@@ -5,18 +5,33 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import ApproverList from './ApproverList';
 import ErrorMessage from './ErrorMessage';
 import {COLORS} from '../constants/color';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {useGetApprover} from '../helper/api';
 
-const ApproverInput = ({index, handleChange}) => {
+const ApproverInput = ({index, handleChange, data}) => {
   const [approver, setApprover] = useState([]);
   const refRBSS = useRef();
+  const [text, setText] = useState([]);
+  console.log(approver);
+
+  
+
+  useEffect(() => {
+    if (data.length !== 0) {
+      const filted = data.filter(item => approver.includes(item.id));
+      const result = filted.map(item => item.name);
+      setText(result);
+      handleChange(approver, refRBSS);
+    }
+  }, [approver]);
+
   return (
-    <View style={styles.inputContainer} key={index}>
+    <View style={styles.inputContainer}>
       <RBSheet
         ref={refRBSS}
         closeOnPressMask={false}
@@ -35,6 +50,7 @@ const ApproverInput = ({index, handleChange}) => {
           refRBS={refRBSS}
           setApprover={setApprover}
           approver={approver}
+          data={data}
         />
       </RBSheet>
 
@@ -43,14 +59,13 @@ const ApproverInput = ({index, handleChange}) => {
         <TextInput
           style={styles.input}
           placeholder="Select Feature"
-          onChangeText={text => handleChange(text)}
           placeholderTextColor={COLORS.grey}
           editable={false}
-          value
+          value={text.join(', ')}
         />
         <TouchableOpacity
           onPress={() => {
-            refRBSheetApprover.current.open();
+            refRBSS.current.open();
           }}>
           <Icon name="chevron-down" style={styles.iconInput} />
         </TouchableOpacity>

@@ -14,10 +14,8 @@ import {FEATURE} from '../constants/api';
 import CheckBox from '@react-native-community/checkbox';
 import {useGetApprover, useGetFeature} from '../helper/api';
 
-const ApproverList = ({refRBS, setApprover, approver}) => {
+const ApproverList = ({refRBS, setApprover, approver, data}) => {
   const [search, setSearch] = useState('');
-
-  const {data} = useGetApprover();
 
   return (
     <View style={styles.container}>

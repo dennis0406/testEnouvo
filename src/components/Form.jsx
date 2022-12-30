@@ -2,6 +2,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -11,51 +12,164 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import Button from './Button';
 import axios from 'axios';
-import {FEATURE} from '../constants/api';
+import {APPROVAL, FEATURE} from '../constants/api';
 import {useGetApprover, useGetFeature} from '../helper/api';
 import FeatureList from './FeatureList';
 import ApproverList from './ApproverList';
 import ErrorMessage from './ErrorMessage';
 import ApproverInput from './ApproverInput';
+import {useNavigation} from '@react-navigation/native';
 
-const Form = () => {
-  const [quantity, setQuantity] = useState(0);
+const Form = ({route, idItem}) => {
+  const navigation = useNavigation();
+  const [quantity, setQuantity] = useState('');
   const refRBSheet = useRef();
-  const refRBSheetApprover = useRef();
   const [feature, setFeature] = useState('');
-  const [featureName, setFeatureName] = useState('');
-  const [approver, setApprover] = useState([]);
-  const [approvalName, setApprovalName] = useState();
+  const [refArr, setRefArr] = useState([]);
+  const [approverArr, setapproverArr] = useState([]);
+  const [dataItem, setDataItem] = useState({});
+
+  useEffect(() => {
+    if (idItem !== undefined) {
+      axios.get(`${APPROVAL}/${idItem}`).then(res => {
+        setDataItem(res.data);
+        setParams({name: res.data.name, feature: res.data.feature});
+        setQuantity(res.data.approvers.length);
+        setapproverArr(res.data.approvers);
+        setRange(res.data.range);
+      });
+    }
+  }, [idItem]);
+
+  console.log('approverArr', approverArr);
+
+  const [errMessage, setErrMessage] = useState({
+    name: '',
+    feature: '',
+    minimum: '',
+    maximum: '',
+    quantity: '',
+  });
+
+  const [range, setRange] = useState({
+    minimum: 0,
+    maximum: 0,
+  });
+
   const [params, setParams] = useState({
     name: '',
     feature: '',
-    range: {},
-    approvers: [],
   });
 
   const handeChange = (name, value) => {
     setParams({...params, [name]: value});
   };
 
-  console.log(approver);
-  const [range, setRange] = useState({
-    minimum: 0,
-    maximum: 0,
-  });
-
   const handeChangeRange = (name, value) => {
     setRange({...range, [name]: value});
   };
 
-  const dataFeature = useGetFeature();
   const dataApprover = useGetApprover();
   useEffect(() => {
     if (feature !== '') {
       axios
         .get(`${FEATURE}/${feature}`)
         .then(res => handeChange('feature', res.data.name));
+      console.log('isFetching');
     }
   }, [feature]);
+
+  const handleChangeApproverArr = (approverArr, refBTS) => {
+    refBTS.current.approverArray = approverArr;
+    if (!refArr.includes(refBTS) && refArr.length !== 0) {
+      setRefArr([...refArr, refBTS]);
+      const result = refArr.map(ref => ref.current.approverArray);
+      console.log('result',result);
+    }
+  };
+
+  const resetData = () => {
+    setParams({
+      name: '',
+      feature: '',
+    });
+    setRange({
+      minimum: 0,
+      maximum: 0,
+    });
+    setapproverArr([]);
+    setQuantity('');
+    setRefArr([]);
+    setErrMessage({
+      name: '',
+      feature: '',
+      minimum: '',
+      maximum: '',
+      quantity: '',
+    });
+  };
+
+  const validateData = paramsObj => {
+    let check = true;
+    if (paramsObj.name == '') {
+      check = false;
+      setErrMessage({...errMessage, ['name']: 'Required input'});
+    }
+
+    return check;
+  };
+
+  const createApproval = () => {
+    const paramsObj = {
+      name: params.name,
+      feature: params.feature,
+      range: {
+        minimum: range.minimum,
+        maximum: range.maximum,
+      },
+      approvers: approverArr,
+    };
+
+    const check = validateData(paramsObj);
+    if (!check) {
+      return; //Not create
+    }
+
+    axios
+      .post(APPROVAL, paramsObj)
+      .then(() => {
+        resetData();
+        ToastAndroid.show('Created successfully !', ToastAndroid.LONG);
+        navigation.navigate('Home');
+      })
+      .catch(e => console.log(e));
+  };
+
+  const updateApproval = () => {
+    const paramsObj = {
+      name: params.name,
+      feature: params.feature,
+      range: {
+        minimum: range.minimum,
+        maximum: range.maximum,
+      },
+      approvers: approverArr,
+    };
+
+    const check = validateData(paramsObj);
+    if (!check) {
+      return; //Not create
+    }
+
+    axios
+      .put(`${APPROVAL}/${idItem}`, paramsObj)
+      .then(() => {
+        resetData();
+        ToastAndroid.show('Updated successfully !', ToastAndroid.LONG);
+        navigation.navigate('Home');
+      })
+      .catch(e => console.log(e));
+  };
 
   return (
     <View style={styles.container}>
@@ -70,7 +184,7 @@ const Form = () => {
             value={params.name}
           />
         </View>
-        <ErrorMessage message="test" />
+        <ErrorMessage message={errMessage.name} />
       </View>
 
       <View style={styles.inputContainer}>
@@ -90,7 +204,7 @@ const Form = () => {
             <Icon name="chevron-down" style={styles.iconInput} />
           </TouchableOpacity>
         </View>
-        <ErrorMessage />
+        <ErrorMessage message={errMessage.feature} />
       </View>
 
       {/* feature lists */}
@@ -124,13 +238,13 @@ const Form = () => {
           <TextInput
             style={styles.input}
             placeholder="Input minimum"
-            value={range.minimum}
+            value={range.minimum.toString()}
             onChangeText={text => handeChangeRange('minimum', text)}
             placeholderTextColor={COLORS.grey}
             keyboardType="numeric"
           />
         </View>
-        <ErrorMessage />
+        <ErrorMessage message={errMessage.minimum} />
       </View>
 
       <View style={styles.inputContainer}>
@@ -140,13 +254,13 @@ const Form = () => {
           <TextInput
             style={styles.input}
             placeholder="Input maximum"
-            value={range.maximum}
+            value={range.maximum.toString()}
             onChangeText={text => handeChangeRange('maximum', text)}
             placeholderTextColor={COLORS.grey}
             keyboardType="numeric"
           />
         </View>
-        <ErrorMessage />
+        <ErrorMessage message={errMessage.maximum} />
       </View>
 
       <View style={styles.inputContainer}>
@@ -156,74 +270,37 @@ const Form = () => {
             style={styles.input}
             placeholder="Input number"
             onChangeText={text => {
-              setQuantity(parseInt(text));
+              setQuantity(text);
             }}
             placeholderTextColor={COLORS.grey}
             keyboardType="numeric"
-            value={quantity}
+            value={quantity.toString()}
           />
         </View>
-        <ErrorMessage />
+        <ErrorMessage message={errMessage.quantity} />
       </View>
 
       {/* Approvers */}
       <View style={styles.approver}>
-        {quantity > 0
-          ? [...Array(quantity)].map((qty, index) => (
-              <ApproverInput index={index} />
+        {parseInt(quantity) > 0
+          ? [...Array(parseInt(quantity))].map((qty, index) => (
+              <ApproverInput
+                key={index}
+                index={index}
+                data={dataApprover.data}
+                handleChange={handleChangeApproverArr}
+              />
             ))
           : null}
       </View>
-      {/* <View style={styles.inputContainer} key={index}>
-                <Text style={styles.label}>
-                  Approver (Sequence {index + 1})
-                </Text>
-                <View style={styles.wrapperInput}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Select Feature"
-                    onChange={text => console.log(text.nativeEvent.text)}
-                    placeholderTextColor={COLORS.grey}
-                    editable={false}
-                  />
-                  <TouchableOpacity
-                    onPress={() => {
-                      refRBSheetApprover.current.open();
-                    }}>
-                    <Icon name="chevron-down" style={styles.iconInput} />
-                  </TouchableOpacity>
-                </View>
-                <ErrorMessage />
-              </View> */}
 
-      {/* <View>
-        <RBSheet
-          ref={refRBSheetApprover}
-          closeOnPressMask={false}
-          animationType="slide"
-          minClosingHeight={20}
-          customStyles={{
-            container: {
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              height: 650,
-              borderTopLeftRadius: 23,
-              borderTopRightRadius: 23,
-            },
-          }}>
-          <ApproverList
-            refRBS={refRBSheetApprover}
-            setApprover={setApprover}
-            approver={approver}
-          />
-        </RBSheet>
-      </View> */}
-
-      <TouchableOpacity onPress={() => {}} style={styles.btn}>
-        <Button textBtn="ADD TO LIST" />
+      <TouchableOpacity
+        onPress={route == 'Create' ? createApproval : updateApproval}
+        style={styles.btn}>
+        <Button textBtn={route == 'Create' ? 'ADD TO LIST' : 'UPDATE'} />
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => {}} style={styles.btn}>
+      <TouchableOpacity onPress={resetData} style={styles.btn}>
         <Button textBtn="RESET" primary={false} />
       </TouchableOpacity>
     </View>

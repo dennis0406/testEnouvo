@@ -3,11 +3,11 @@ import React from 'react';
 import Title from '../../components/Title';
 import Form from '../../components/Form';
 
-const AddNew = () => {
+const AddNew = ({navigation}) => {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <Title title="Create New Approval Matrix" />
-      <Form />
+      <Form route="Create" />
     </ScrollView>
   );
 };

@@ -1,6 +1,7 @@
 import {
   Dimensions,
   FlatList,
+  RefreshControl,
   StatusBar,
   StyleSheet,
   Text,
@@ -12,7 +13,12 @@ import React, {useEffect, useState} from 'react';
 import {COLORS} from '../../constants/color';
 import Button from '../../components/Button';
 import {useNavigation} from '@react-navigation/native';
-import {deleteData, useGetData, useGetFeature} from '../../helper/api';
+import {
+  deleteData,
+  useGetApprover,
+  useGetData,
+  useGetFeature,
+} from '../../helper/api';
 import {APPROVAL} from '../../constants/api';
 import ApprovalItem from './components/ApprovalItem';
 import {SwipeListView} from 'react-native-swipe-list-view';
@@ -23,6 +29,7 @@ import axios from 'axios';
 const Home = ({navigation}) => {
   const [data, setData] = useState([]);
   const dataFeature = useGetFeature();
+  const dataApprover = useGetApprover();
   const [isDelete, setIsDelete] = useState(false);
 
   useEffect(() => {
@@ -45,16 +52,24 @@ const Home = ({navigation}) => {
         <SwipeListView
           data={data}
           renderItem={({item}) => (
-            <ApprovalItem dataItem={item} dataFeatures={dataFeature} />
+            <ApprovalItem dataItem={item} dataFeatures={dataApprover} />
           )}
           keyExtractor={item => item.id}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={() => {
+                setIsDelete(!isDelete);
+              }}
+            />
+          }
           style={styles.flatlist}
           renderHiddenItem={(data, rowMap) => (
             <View style={styles.rowBack}>
               <TouchableOpacity
                 style={[styles.btn, styles.btnUpdate]}
                 onPress={() => {
-                  rowMap[data.item.id].closeRow();
+                  navigation.navigate('Update', {idItem: data.item.id});
                 }}>
                 <IconAntDesign name="edit" size={30} color={COLORS.white} />
               </TouchableOpacity>
@@ -76,7 +91,7 @@ const Home = ({navigation}) => {
             </View>
           )}
           leftOpenValue={75}
-          rightOpenValue={-150}
+          rightOpenValue={-165}
         />
       </View>
     </View>
@@ -128,7 +143,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rowBack: {
-    backgroundColor: COLORS.grey,
+    backgroundColor: COLORS.secondary,
     flexDirection: 'row',
     borderRadius: 20,
     justifyContent: 'space-between',
@@ -147,5 +162,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     width: '55%',
     alignItems: 'flex-start',
+    borderRadius: 20,
   },
 });
